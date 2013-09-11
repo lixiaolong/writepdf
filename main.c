@@ -6,6 +6,14 @@
 #include "hpdf.h"
 
 HPDF_Font g_font_sun, g_font_hei;
+HPDF_RGBColor g_color_green = {0, 0.8, 0.2};
+HPDF_RGBColor g_color_yellow = {1.0, 0.6, 0};
+HPDF_RGBColor g_color_red = {1.0, 0, 0};
+HPDF_RGBColor g_color_black = {0, 0, 0};
+HPDF_RGBColor g_color_white = {1, 1, 1};
+
+HPDF_RGBColor g_color_lightbluex = {0.9, 1.0, 1.0};
+HPDF_RGBColor g_color_lightblue = {0.6, 0.8, 1.0};
 
 typedef enum _HPDF_CSS_TYPE {
     PDF_CSS_TYPE_BEGIN = 1000,
@@ -37,8 +45,12 @@ typedef struct _HPDF_CSS {
     HPDF_REAL page_height;          /* 页面高度 */
     HPDF_REAL width_ratio;          /* 宽度比率 */
     HPDF_REAL text_leading;         /* 行距 */
+    HPDF_REAL line_width;           /* 边框线的宽度 */
     HPDF_Font font;                 /* 字体 */
     HPDF_UINT font_size;            /* 字体大小 */
+    HPDF_RGBColor font_color;       /* 字体颜色 */
+    HPDF_RGBColor bg_color;         /* 背景颜色 */
+    HPDF_RGBColor line_color;       /* 边框颜色 */
     HPDF_Rect side_margin;          /* 页面边距 */
     HPDF_Rect seg_margin;           /* 段落边距 */
     HPDF_Rect cur_text_pos;         /* 当前文本位置 */
@@ -97,7 +109,12 @@ int HPDF_CSS_Init(HPDF_CSS *hcss) {
 
     hcss->withFrame = 0;
     hcss->textAlign = HPDF_TALIGN_LEFT;
-    hcss->text_height = 0;
+    hcss->text_height = 0.0;
+    hcss->line_width = 1.0;
+
+    hcss->font_color = g_color_black;
+    hcss->bg_color = g_color_white;
+    hcss->line_color = g_color_lightblue;
 
     //printf("page height: %f, page_width: %f\n", hcss->page_height, hcss->page_width);
     return 0;
@@ -117,13 +134,17 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->width_ratio = 1;
             css->text_leading = 30;
             css->font = g_font_hei;
-            css->font_size = 24;
+            css->font_size = 30;
+            css->text_height = (css->page_height - css->side_margin.top - css->side_margin.bottom) / 2;
             css->seg_margin.left = 2;
             css->seg_margin.right = 2;
-            css->seg_margin.top = 10;
-            css->seg_margin.bottom = 22;
+            css->seg_margin.top = css->text_height / 2;
+            css->seg_margin.bottom = css->text_height / 4;
             css->withFrame = 0;
             css->textAlign = HPDF_TALIGN_CENTER;
+            css->font_color = g_color_black;
+            css->bg_color = g_color_white;
+            css->line_color = g_color_black;
             break;
         }
 
@@ -136,10 +157,14 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->text_leading = css->font_size * 1.5;
             css->seg_margin.left = 2;
             css->seg_margin.right = 2;
-            css->seg_margin.top = css->font_size / 2;
+            css->seg_margin.top = css->font_size;
             css->seg_margin.bottom = css->font_size / 2;
             css->withFrame = 0;
+            css->text_height = 0;
             css->textAlign = HPDF_TALIGN_LEFT;
+            css->font_color = g_color_black;
+            css->bg_color = g_color_white;
+            css->line_color = g_color_black;
             break;
         }
         case PDF_CSS_TYPE_H2:
@@ -154,7 +179,11 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->seg_margin.top = css->font_size / 2;
             css->seg_margin.bottom = css->font_size / 2;
             css->withFrame = 0;
+            css->text_height = 0;
             css->textAlign = HPDF_TALIGN_LEFT;
+            css->font_color = g_color_black;
+            css->bg_color = g_color_white;
+            css->line_color = g_color_black;
             break;
         }
         case PDF_CSS_TYPE_H3:
@@ -169,7 +198,11 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->seg_margin.top = css->font_size / 2;
             css->seg_margin.bottom = css->font_size / 2;
             css->withFrame = 0;
+            css->text_height = 0;
             css->textAlign = HPDF_TALIGN_LEFT;
+            css->font_color = g_color_black;
+            css->bg_color = g_color_white;
+            css->line_color = g_color_black;
             break;
         }
         case PDF_CSS_TYPE_H4:
@@ -184,7 +217,11 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->seg_margin.top = css->font_size / 2;
             css->seg_margin.bottom = css->font_size / 2;
             css->withFrame = 0;
+            css->text_height = 0;
             css->textAlign = HPDF_TALIGN_LEFT;
+            css->font_color = g_color_black;
+            css->bg_color = g_color_white;
+            css->line_color = g_color_black;
             break;
         }
         case PDF_CSS_TYPE_H5:
@@ -199,7 +236,11 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->seg_margin.top = css->font_size / 2;
             css->seg_margin.bottom = css->font_size / 2;
             css->withFrame = 0;
+            css->text_height = 0;
             css->textAlign = HPDF_TALIGN_LEFT;
+            css->font_color = g_color_black;
+            css->bg_color = g_color_white;
+            css->line_color = g_color_black;
             break;
         }
         case PDF_CSS_TYPE_H6:
@@ -214,7 +255,11 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->seg_margin.top = css->font_size / 2;
             css->seg_margin.bottom = css->font_size / 2;
             css->withFrame = 0;
+            css->text_height = 0;
             css->textAlign = HPDF_TALIGN_LEFT;
+            css->font_color = g_color_black;
+            css->bg_color = g_color_white;
+            css->line_color = g_color_black;
             break;
         }
         case PDF_CSS_TYPE_P:
@@ -229,7 +274,11 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->seg_margin.top = css->font_size / 2;
             css->seg_margin.bottom = css->font_size / 2;
             css->withFrame = 0;
+            css->text_height = 0;
             css->textAlign = HPDF_TALIGN_LEFT;
+            css->font_color = g_color_black;
+            css->bg_color = g_color_white;
+            css->line_color = g_color_black;
             break;
         }
         case PDF_CSS_TYPE_TR:
@@ -245,6 +294,9 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->seg_margin.bottom = 4;
             css->withFrame = 1;
             css->textAlign = HPDF_TALIGN_CENTER;
+            css->font_color = g_color_black;
+            css->bg_color = g_color_white;
+            css->line_color = g_color_lightblue;
             break;
         }
         case PDF_CSS_TYPE_TD:
@@ -254,12 +306,15 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->font = g_font_hei;
             css->font_size = 12;
             css->text_leading = css->font_size * 1.5;
-            css->withFrame = 1;
             css->seg_margin.left = 2;
             css->seg_margin.right = 2;
             css->seg_margin.top = 4;
             css->seg_margin.bottom = 4;
+            css->withFrame = 1;
             css->textAlign = HPDF_TALIGN_CENTER;
+            css->font_color = g_color_black;
+            css->bg_color = g_color_lightbluex;
+            css->line_color = g_color_lightblue;
             break;
         }
         default:
@@ -271,7 +326,7 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
 }
 
 // 内容的行数 = 回车符的个数 + 内容的总长度 / 当前行宽 + 1
-float  HPDF_CSS_GetTextHeight(HPDF_CSS *css, char *text) {
+float  HPDF_CSS_GetTextHeight(HPDF_HANDLE pdf, char *text) {
     HPDF_REAL text_width = 0, text_height = 0;
     HPDF_REAL text_width_per_line = 0;
     int text_height_count = 0, text_len = 0, enter_count = 0, i = 0;
@@ -284,20 +339,25 @@ float  HPDF_CSS_GetTextHeight(HPDF_CSS *css, char *text) {
         if(text[i] == 0x0a)
             enter_count++;
     }
+
+    text_width = HPDF_Page_TextWidth(pdf->page, text);
     
-    text_width = text_len * css->font_size / 2;
+    //text_width = text_len * css->font_size / 2;
 
     // 当前可输入的行宽
-    text_width_per_line = css->page_width - 
-        css->side_margin.left - css->side_margin.right -
-        css->seg_margin.left  - css->seg_margin.right;
+    text_width_per_line = pdf->css.page_width - 
+        pdf->css.side_margin.left - pdf->css.side_margin.right -
+        pdf->css.seg_margin.left  - pdf->css.seg_margin.right;
 
-    text_width_per_line = text_width_per_line * css->width_ratio;
+    text_width_per_line = text_width_per_line * pdf->css.width_ratio;
 
     text_height_count = text_width / text_width_per_line + 1 + enter_count;
 
-    text_height = text_height_count * css->text_leading + 
-        css->seg_margin.top + css->seg_margin.bottom;
+    text_height = text_height_count * pdf->css.text_leading + 
+        pdf->css.seg_margin.top + pdf->css.seg_margin.bottom;
+
+    printf("line count: %d, strlen: %d, text_width: %f, text_width_per_line: %f\n", 
+        text_height_count, text_len, text_width, text_width_per_line);
 
     return text_height;
 }
@@ -353,7 +413,7 @@ int HPDF_HANDLE_Print(HPDF_HANDLE hpdf, char *text) {
     HPDF_REAL text_height = 0;
     HPDF_UINT outlen = 0;
     HPDF_STATUS ret;
-    
+
     HPDF_Page_BeginText(hpdf->page);
 
     // font and font_size
@@ -362,16 +422,18 @@ int HPDF_HANDLE_Print(HPDF_HANDLE hpdf, char *text) {
     // text_leading
     HPDF_Page_SetTextLeading (hpdf->page, hpdf->css.text_leading);
 
+    printf("------------------------%f\n", hpdf->css.text_height);
+
     // text_height
-    if(hpdf->css.text_height == 0) {
-        text_height = HPDF_CSS_GetTextHeight(&hpdf->css, text);
-    } else {
+    if(hpdf->css.text_height > 0) {
         text_height = hpdf->css.text_height;
+    } else {
+        text_height = HPDF_CSS_GetTextHeight(hpdf, text);
     }
 
     // calc current position
     // ====================================================
-    printf("===begin: left:%f right:%f top:%f bottom:%f\n", hpdf->css.cur_frame_pos.left, 
+    printf("===begin: height:%f left:%f right:%f top:%f bottom:%f\n", text_height, hpdf->css.cur_frame_pos.left, 
         hpdf->css.cur_frame_pos.right, hpdf->css.cur_frame_pos.top, hpdf->css.cur_frame_pos.bottom);
 
     hpdf->css.cur_frame_pos.left = hpdf->css.cur_frame_pos.right;
@@ -410,6 +472,31 @@ int HPDF_HANDLE_Print(HPDF_HANDLE hpdf, char *text) {
 
     printf("===middle: left:%f right:%f top:%f bottom:%f\n", hpdf->css.cur_frame_pos.left, 
         hpdf->css.cur_frame_pos.right, hpdf->css.cur_frame_pos.top, hpdf->css.cur_frame_pos.bottom);
+
+    // 输出边框，如果要输出背景色，必须先输背景色再输文字，所以这里先关闭文字，输出背景色，再开启文字输出
+    if(hpdf->css.withFrame)
+    {
+        HPDF_Page_EndText(hpdf->page);
+        
+        HPDF_Page_SetLineWidth (hpdf->page, hpdf->css.line_width);
+        HPDF_Page_SetRGBStroke (hpdf->page, hpdf->css.line_color.r, hpdf->css.line_color.g, hpdf->css.line_color.b);
+        HPDF_Page_SetRGBFill (hpdf->page, hpdf->css.bg_color.r, hpdf->css.bg_color.g, hpdf->css.bg_color.b);
+        HPDF_Page_Rectangle (hpdf->page, hpdf->css.cur_frame_pos.left, hpdf->css.cur_frame_pos.bottom, 
+                    hpdf->css.cur_frame_pos.right - hpdf->css.cur_frame_pos.left,
+                    hpdf->css.cur_frame_pos.top - hpdf->css.cur_frame_pos.bottom);
+        //HPDF_Page_Stroke (hpdf->page);
+        HPDF_Page_FillStroke(hpdf->page);
+
+        HPDF_Page_BeginText(hpdf->page);
+
+        // font and font_size
+        HPDF_Page_SetFontAndSize(hpdf->page, hpdf->css.font, hpdf->css.font_size);
+
+        // text_leading
+        HPDF_Page_SetTextLeading (hpdf->page, hpdf->css.text_leading);
+
+    }
+    
     // ====================================================   
 
 
@@ -419,13 +506,14 @@ int HPDF_HANDLE_Print(HPDF_HANDLE hpdf, char *text) {
     hpdf->css.cur_text_pos.right = hpdf->css.cur_frame_pos.right - hpdf->css.seg_margin.right;
     hpdf->css.cur_text_pos.top = hpdf->css.cur_frame_pos.top - hpdf->css.seg_margin.top;
     hpdf->css.cur_text_pos.bottom= hpdf->css.cur_frame_pos.bottom + hpdf->css.seg_margin.bottom;
-    
+
+    HPDF_Page_SetRGBFill (hpdf->page, hpdf->css.font_color.r, hpdf->css.font_color.g, hpdf->css.font_color.b);
     ret = HPDF_Page_TextRect(hpdf->page, hpdf->css.cur_text_pos.left, hpdf->css.cur_text_pos.top, 
         hpdf->css.cur_text_pos.right, hpdf->css.cur_text_pos.bottom, text, hpdf->css.textAlign, &outlen);
-
     
     HPDF_Page_EndText(hpdf->page);
-    printf("output string ret:%x %d\n", ret, outlen);
+    printf("output string ret:%x outlen:%d height:%f width:%f\n", ret, outlen, hpdf->css.page_height, hpdf->css.page_width);
+
     if(outlen <= 0)
     {
         // 输出失败，坐标回退到输出前的状态
@@ -433,23 +521,14 @@ int HPDF_HANDLE_Print(HPDF_HANDLE hpdf, char *text) {
         hpdf->css.cur_frame_pos.bottom = hpdf->css.cur_frame_pos.top;
     }
     else
-    {
-        // 输出边框
-        if(hpdf->css.withFrame)
-        {
-            HPDF_Page_Rectangle (hpdf->page, hpdf->css.cur_frame_pos.left, hpdf->css.cur_frame_pos.bottom, 
-                        hpdf->css.cur_frame_pos.right - hpdf->css.cur_frame_pos.left,
-                        hpdf->css.cur_frame_pos.top - hpdf->css.cur_frame_pos.bottom);
-            HPDF_Page_Stroke (hpdf->page);
-        }
-        
-        if(hpdf->css.cur_frame_pos.right < (hpdf->css.page_width - hpdf->css.side_margin.right))
+    {   
+        if((int)hpdf->css.cur_frame_pos.right < (int)(hpdf->css.page_width - hpdf->css.side_margin.right))
         {
             // 右边还有空间可以输入
             hpdf->css.cur_frame_pos.left = hpdf->css.cur_frame_pos.right;
             hpdf->css.cur_frame_pos.bottom = hpdf->css.cur_frame_pos.top;
         } 
-        else if(hpdf->css.cur_frame_pos.right == (hpdf->css.page_width - hpdf->css.side_margin.right))
+        else if((int)hpdf->css.cur_frame_pos.right == (int)(hpdf->css.page_width - hpdf->css.side_margin.right))
         {
             // 当前行已经输满
             hpdf->css.cur_frame_pos.left = hpdf->css.side_margin.left;
@@ -472,13 +551,12 @@ int HPDF_HANDLE_Print(HPDF_HANDLE hpdf, char *text) {
 int main (int argc, char **argv)
 {
     const char *fname = "1.pdf";
-    HPDF_Doc  pdf;
-    HPDF_Font font;
-    HPDF_Page page;
+    HPDF_HANDLE hpdf;
+    HPDF_CSS pdfcss;
     HPDF_STATUS ret;
     HPDF_UINT outlen = 0;
-    HPDF_CSS pdfcss;
-    HPDF_HANDLE hpdf;
+    
+
 
     hpdf = HPDF_HANDLE_New();
     if(!hpdf)
@@ -488,138 +566,269 @@ int main (int argc, char **argv)
     }
 
     HPDF_CSS_SET(PDF_CSS_TYPE_TITLE, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "杭州迪普科技");
+    HPDF_HANDLE_Print(hpdf, "主机漏洞扫描报表");
 
+    hpdf->css.font_size = 18;
+    hpdf->css.font = g_font_sun;
+    HPDF_HANDLE_Print(hpdf, "报表创建人:system\n报表生成时间:2013-9-10");
     
     HPDF_CSS_SET(PDF_CSS_TYPE_H1, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "公司简介");
+    HPDF_HANDLE_Print(hpdf, "1 扫描概要信息");
     
-    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "    杭州迪普科技有限公司（简称“迪普科技”）是在网络安全及应用交付领域集研发、生产、销售于一体的高科技企业。迪普科技以“让网络变得简单、智能、可靠”为愿景，专注于网络安全及应用交付领域，持续创新，为客户提供领先的产品与解决方案。");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_H2, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "二级标题");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "    迪普科技的总部位于杭州，在北京和杭州设有研发中心，具有一支业界领先的研发团队，自主开发了基于FPGA的高性能内容识别与加速芯片、高性能分布式APP-X硬件平台、虚拟化Conplat核心软件平台以及APP-ID特征库，并在此基础上推出了以应用防火墙、入侵防御系统（IPS）、上网行为管理及流控（UAG）、Web应用防火墙（WAF）、异常流量检测/清洗（Probe/Guard）、应用交付（ADX）、深度业务路由交换网关（DPX）、工业交换机等为代表的全面的网络安全与应用交付产品线。基于完善的产品线，迪普科技具有为客户提供深度定制化解决方案的能力。");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_H3, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "三级标题");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "    迪普科技通过了GB/T19001-2008（ISO9001:2008)质量管理体系标准认证，质量管理严格遵循ISC生产制造流程。同时，严控供应商的质量管理体系、职业健康与安全管理体系以及环境管理体系，为客户提供质量可靠的产品。同时，迪普科技在全国所有省、自治区及直辖市都设有销售与服务机构。依托分布于全国的分支机构及合作伙伴，迪普科技在全国范围内都具有为客户提供7×24小时服务的能力。");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_H4, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "四级标题");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "    从成立至今，迪普科技实现了高速成长，目前已经积累了超过10,000家客户的应用，全面进入了包括运营商、政府、电力能源、金融、教育、大企业等在内的各行各业，成为国内重要的网络安全与应用交付厂商之一。未来，迪普科技将继续在网络安全与应用交付领域进行持续投入，进一步完善产品与解决方案，为客户创造更大价值。");
-
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_H1, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "公司简介");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "    杭州迪普科技有限公司（简称“迪普科技”）是在网络安全及应用交付领域集研发、生产、销售于一体的高科技企业。迪普科技以“让网络变得简单、智能、可靠”为愿景，专注于网络安全及应用交付领域，持续创新，为客户提供领先的产品与解决方案。");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_H5, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "五级标题");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "    迪普科技的总部位于杭州，在北京和杭州设有研发中心，具有一支业界领先的研发团队，自主开发了基于FPGA的高性能内容识别与加速芯片、高性能分布式APP-X硬件平台、虚拟化Conplat核心软件平台以及APP-ID特征库，并在此基础上推出了以应用防火墙、入侵防御系统（IPS）、上网行为管理及流控（UAG）、Web应用防火墙（WAF）、异常流量检测/清洗（Probe/Guard）、应用交付（ADX）、深度业务路由交换网关（DPX）、工业交换机等为代表的全面的网络安全与应用交付产品线。基于完善的产品线，迪普科技具有为客户提供深度定制化解决方案的能力。");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_H6, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "六级标题");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "    迪普科技通过了GB/T19001-2008（ISO9001:2008)质量管理体系标准认证，质量管理严格遵循ISC生产制造流程。同时，严控供应商的质量管理体系、职业健康与安全管理体系以及环境管理体系，为客户提供质量可靠的产品。同时，迪普科技在全国所有省、自治区及直辖市都设有销售与服务机构。依托分布于全国的分支机构及合作伙伴，迪普科技在全国范围内都具有为客户提供7×24小时服务的能力。");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_H3, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "三级标题");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "    从成立至今，迪普科技实现了高速成长，目前已经积累了超过10,000家客户的应用，全面进入了包括运营商、政府、电力能源、金融、教育、大企业等在内的各行各业，成为国内重要的网络安全与应用交付厂商之一。未来，迪普科技将继续在网络安全与应用交付领域进行持续投入，进一步完善产品与解决方案，为客户创造更大价值。");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_H3, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "三级标题");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "    从成立至今，迪普科技实现了高速成长，目前已经积累了超过10,000家客户的应用，全面进入了包括运营商、政府、电力能源、金融、教育、大企业等在内的各行各业，成为国内重要的网络安全与应用交付厂商之一。未来，迪普科技将继续在网络安全与应用交付领域进行持续投入，进一步完善产品与解决方案，为客户创造更大价值。");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_H3, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "三级标题");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "    从成立至今，迪普科技实现了高速成长，目前已经积累了超过10,000家客户的应用，全面进入了包括运营商、政府、电力能源、金融、教育、大企业等在内的各行各业，成为国内重要的网络安全与应用交付厂商之一。未来，迪普科技将继续在网络安全与应用交付领域进行持续投入，进一步完善产品与解决方案，为客户创造更大价值。");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_H3, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "三级标题");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "    从成立至今，迪普科技实现了高速成长，目前已经积累了超过10,000家客户的应用，全面进入了包括运营商、政府、电力能源、金融、教育、大企业等在内的各行各业，成为国内重要的网络安全与应用交付厂商之一。未来，迪普科技将继续在网络安全与应用交付领域进行持续投入，进一步完善产品与解决方案，为客户创造更大价值。");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_H3, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "三级标题");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "    从成立至今，迪普科技实现了高速成长，目前已经积累了超过10,000家客户的应用，全面进入了包括运营商、政府、电力能源、金融、教育、大企业等在内的各行各业，成为国内重要的网络安全与应用交付厂商之一。未来，迪普科技将继续在网络安全与应用交付领域进行持续投入，进一步完善产品与解决方案，为客户创造更大价值。");
-
-    HPDF_CSS_SET(PDF_CSS_TYPE_H3, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "三级标题");
+    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);    
+    HPDF_HANDLE_Print(hpdf, "    DPtech Scanner从 2013-08-10 14:50:00 开始对您网络的IP段 10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24; 进行扫描，此次扫描总共扫描了 73 台主机，其中有 59 台在线，此次扫描于 2013-08-10 15:15:02 结束。");
 
     HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
-    hpdf->css.width_ratio = 0.2;
-    HPDF_HANDLE_Print(hpdf, "表格标题");
     hpdf->css.width_ratio = 0.3;
-    HPDF_HANDLE_Print(hpdf, "表格内容");
-    hpdf->css.width_ratio = 0.5;
-    HPDF_HANDLE_Print(hpdf, "表格内容");
+    hpdf->css.textAlign = HPDF_TALIGN_LEFT;
+    HPDF_HANDLE_Print(hpdf, "扫描任务名称");
 
     HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
-    hpdf->css.width_ratio = 0.2;
+    hpdf->css.width_ratio = 0.7;
+    hpdf->css.textAlign = HPDF_TALIGN_LEFT;
+    hpdf->css.font_color = g_color_black;
+    HPDF_HANDLE_Print(hpdf, "global");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.3;
+    hpdf->css.textAlign = HPDF_TALIGN_LEFT;
+    HPDF_HANDLE_Print(hpdf, "扫描对象");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.7;
+    hpdf->css.textAlign = HPDF_TALIGN_LEFT;
+    HPDF_HANDLE_Print(hpdf, " ");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.7;
+    hpdf->css.textAlign = HPDF_TALIGN_LEFT;
+    hpdf->css.text_height = HPDF_CSS_GetTextHeight(hpdf, "10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;");
+    hpdf->css.width_ratio = 0.3;
+    HPDF_HANDLE_Print(hpdf, "扫描范围");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.7;
+    hpdf->css.textAlign = HPDF_TALIGN_LEFT;
+    HPDF_HANDLE_Print(hpdf, "10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;10.121.11.1/24;");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.3;
+    hpdf->css.text_height = 0;
+    hpdf->css.textAlign = HPDF_TALIGN_LEFT;
+    HPDF_HANDLE_Print(hpdf, "扫描开始时间");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.7;
+    hpdf->css.textAlign = HPDF_TALIGN_LEFT;
+    HPDF_HANDLE_Print(hpdf, "2013-08-10 14:50:00");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.3;
+    hpdf->css.textAlign = HPDF_TALIGN_LEFT;
+    HPDF_HANDLE_Print(hpdf, "扫描结束时间");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.7;
+    hpdf->css.textAlign = HPDF_TALIGN_LEFT;
+    HPDF_HANDLE_Print(hpdf, "2013-08-10 14:50:00");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.3;
+    hpdf->css.textAlign = HPDF_TALIGN_LEFT;
+    HPDF_HANDLE_Print(hpdf, "扫描模版");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.7;
+    hpdf->css.textAlign = HPDF_TALIGN_LEFT;
+    HPDF_HANDLE_Print(hpdf, "默认漏洞扫描策略");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_H1, &hpdf->css);
+    HPDF_HANDLE_Print(hpdf, "2 网络安全概要信息");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
+    HPDF_HANDLE_Print(hpdf, "    DPtech Scanner本次共扫描了 73 台主机，其中有 59 台在线，其中风险等级为 比较\
+危险的主机数 10 台，其中风险等级为 中度危险 的主机数 3 台，其中风险等级为 低度\
+危险 的主机数 8 台，其中风险等级为 比较安全 的主机数 38 台，网络风险等级为 中度\
+危险。");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_H1, &hpdf->css);
+    HPDF_HANDLE_Print(hpdf, "3 在线主机概要信息");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.13;
     HPDF_HANDLE_Print(hpdf, "IP地址");
-    hpdf->css.width_ratio = 0.8;
+
+    printf("====================\n");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.13;
+    HPDF_HANDLE_Print(hpdf, "主机名称");
+
+    printf("====================\n");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.14;
+    HPDF_HANDLE_Print(hpdf, "操作系统");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.12;
+    HPDF_HANDLE_Print(hpdf, "风险等级");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.12;
+    HPDF_HANDLE_Print(hpdf, "风险分值");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.12;
+    HPDF_HANDLE_Print(hpdf, "漏洞总数");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.08;
+    HPDF_HANDLE_Print(hpdf, "高风险");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.08;
+    HPDF_HANDLE_Print(hpdf, "中风险");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.08;
+    HPDF_HANDLE_Print(hpdf, "低风险");
+
+    printf("====================\n");    
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.13;
+    hpdf->css.text_height = 3 * hpdf->css.text_leading;
     HPDF_HANDLE_Print(hpdf, "192.168.0.1");
 
     HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
-    hpdf->css.width_ratio = 0.2;
-    HPDF_HANDLE_Print(hpdf, "域名");
-    hpdf->css.width_ratio = 0.8;
-    HPDF_HANDLE_Print(hpdf, "www.test.net");
+    hpdf->css.width_ratio = 0.13;
+    HPDF_HANDLE_Print(hpdf, "localhost");
 
     HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
-    hpdf->css.width_ratio = 0.2;
-    HPDF_HANDLE_Print(hpdf, "公司地点");
-    hpdf->css.width_ratio = 0.8;
-    HPDF_HANDLE_Print(hpdf, "杭州");
+    hpdf->css.width_ratio = 0.14;
+    HPDF_HANDLE_Print(hpdf, "Linux 2.6.8 - 2.6.32");
 
-    HPDF_CSS_SET(PDF_CSS_TYPE_TITLE, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "使用帮助");
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.12;
+    hpdf->css.font_color = g_color_red;
+    HPDF_HANDLE_Print(hpdf, "非常危险");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.12;
+    HPDF_HANDLE_Print(hpdf, "206.7");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.12;
+    HPDF_HANDLE_Print(hpdf, "39");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.08;
+    HPDF_HANDLE_Print(hpdf, "5");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.08;
+    HPDF_HANDLE_Print(hpdf, "3");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.08;
+    HPDF_HANDLE_Print(hpdf, "31");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_H1, &hpdf->css);
+    HPDF_HANDLE_Print(hpdf, "4 漏洞概要信息");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_H2, &hpdf->css);
+    HPDF_HANDLE_Print(hpdf, "4.1 漏洞数量概要信息");
 
     HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
-    HPDF_HANDLE_Print(hpdf, "    使用帮助");
+    HPDF_HANDLE_Print(hpdf, "    DPtech Scanner本次扫描发现您的网络共有 951 个漏洞，其中高风险漏洞有 62 个，\
+中风险漏洞有 44 个，低风险漏洞有 845 个。");
 
-    
-    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
-    hpdf->css.width_ratio = 0.1;
-    hpdf->css.withFrame = 0;
-    hpdf->css.textAlign = HPDF_TALIGN_RIGHT;
-    HPDF_HANDLE_Print(hpdf, "·");
-    hpdf->css.width_ratio = 0.9;
-    hpdf->css.withFrame = 0;
-    hpdf->css.textAlign = HPDF_TALIGN_LEFT;    
-    HPDF_HANDLE_Print(hpdf, "192.168.0.1 192.168.0.1 192.168.0.1 192.168.0.1 192.168.0.1 192.168.0.1");
+    HPDF_CSS_SET(PDF_CSS_TYPE_H2, &hpdf->css);
+    HPDF_HANDLE_Print(hpdf, "4.2 漏洞类别分布");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.13;
+    HPDF_HANDLE_Print(hpdf, "IP地址");
+
+    printf("====================\n");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.13;
+    HPDF_HANDLE_Print(hpdf, "主机名称");
+
+    printf("====================\n");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.14;
+    HPDF_HANDLE_Print(hpdf, "操作系统");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.12;
+    HPDF_HANDLE_Print(hpdf, "风险等级");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.12;
+    HPDF_HANDLE_Print(hpdf, "风险分值");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.12;
+    HPDF_HANDLE_Print(hpdf, "漏洞总数");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.08;
+    hpdf->css.font_color = g_color_red;
+    HPDF_HANDLE_Print(hpdf, "高风险");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.08;
+    hpdf->css.font_color = g_color_yellow;
+    HPDF_HANDLE_Print(hpdf, "中风险");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TD, &hpdf->css);
+    hpdf->css.width_ratio = 0.08;
+    hpdf->css.font_color = g_color_green;
+    HPDF_HANDLE_Print(hpdf, "低风险");
+
+    printf("====================\n");    
 
     HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
-    hpdf->css.width_ratio = 0.1;
-    hpdf->css.withFrame = 0;
-    hpdf->css.textAlign = HPDF_TALIGN_RIGHT;
-    HPDF_HANDLE_Print(hpdf, "·");
-    hpdf->css.width_ratio = 0.9;
-    hpdf->css.withFrame = 0;
-    hpdf->css.textAlign = HPDF_TALIGN_LEFT;    
-    HPDF_HANDLE_Print(hpdf, "192.168.0.2");
-    
+    hpdf->css.width_ratio = 0.13;
+    hpdf->css.text_height = 3 * hpdf->css.text_leading;
+    HPDF_HANDLE_Print(hpdf, "192.168.0.1");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.13;
+    HPDF_HANDLE_Print(hpdf, "localhost");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.14;
+    HPDF_HANDLE_Print(hpdf, "Linux 2.6.8 - 2.6.32");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.12;
+    hpdf->css.font_color = g_color_red;
+    HPDF_HANDLE_Print(hpdf, "非常危险");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.12;
+    HPDF_HANDLE_Print(hpdf, "206.7");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.12;
+    HPDF_HANDLE_Print(hpdf, "39");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.08;
+    HPDF_HANDLE_Print(hpdf, "5");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.08;
+    HPDF_HANDLE_Print(hpdf, "3");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_TR, &hpdf->css);
+    hpdf->css.width_ratio = 0.08;
+    HPDF_HANDLE_Print(hpdf, "31");
 
     /* save the document to a file */
     HPDF_SaveToFile (hpdf->pdf, fname);
