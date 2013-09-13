@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <math.h>
 #include <setjmp.h>
@@ -330,7 +331,7 @@ HPDF_HANDLER HPDF_HANDLER_New() {
     }
 
     if (setjmp(env)) {
-        HPDF_Free (ret->pdf);
+        HPDF_HANDLER_Free (ret);
         return NULL;
     }
     /* set compression mode */
@@ -520,6 +521,15 @@ int HPDF_HANDLER_Print(HPDF_HANDLER hpdf, char *text) {
         text_height = HPDF_CSS_GetTextHeight(hpdf, text);
     }
 
+    if(text_height > hpdf->css.page_height - 
+        hpdf->css.side_margin.top - hpdf->css.side_margin.bottom - 
+        hpdf->css.seg_margin.top - hpdf->css.seg_margin.bottom)
+    {
+        text_height = hpdf->css.page_height - 
+            hpdf->css.side_margin.top - hpdf->css.side_margin.bottom - 
+            hpdf->css.seg_margin.top - hpdf->css.seg_margin.bottom;   
+    }
+
     // calc current position
     // ====================================================
     printf("===begin: height:%f left:%f right:%f top:%f bottom:%f\n", text_height, hpdf->css.cur_frame_pos.left, 
@@ -635,4 +645,144 @@ int HPDF_HANDLER_Print(HPDF_HANDLER hpdf, char *text) {
         hpdf->css.cur_frame_pos.right, hpdf->css.cur_frame_pos.top, hpdf->css.cur_frame_pos.bottom);
 
     return outlen;
+}
+
+HPDF_Image HPDF_HANDLER_LoadImageFromFile(HPDF_Doc pdf, char *imageFile) {
+    HPDF_Image image = NULL;
+    char *pFType = NULL;
+
+    // 判断文件是否存在
+    if(access(imageFile, F_OK)) {
+        return NULL;
+    }
+
+    // 判断文件后缀
+    if(pFType = strrchr(imageFile, '.')) {
+        //printf("====%s\n", pFType);
+        if(strcmp(pFType, ".png") == 0) {
+            image =  HPDF_LoadPngImageFromFile(pdf, imageFile);
+        } else if (strcmp(pFType, ".jpg") == 0) {
+            image =  HPDF_LoadJpegImageFromFile(pdf, imageFile);
+        } else {
+            image = NULL;
+        }
+    }
+    return image;
+}
+
+int HPDF_HANDLER_PrintImage(HPDF_HANDLER hpdf, char *imageFile) {
+    HPDF_Image image = NULL;
+    HPDF_REAL image_height, image_width, image_hw_ratio;
+    HPDF_Point pos;
+    
+    image =  HPDF_HANDLER_LoadImageFromFile(hpdf->pdf, imageFile);
+    if(image == NULL) {
+        int withFrame = 0;
+        printf("load image file failed!\n");
+        withFrame = hpdf->css.withFrame;
+        hpdf->css.withFrame = 1;
+        HPDF_HANDLER_Print(hpdf, "图片加载失败");
+        hpdf->css.withFrame = withFrame;
+        return 40;
+    }
+    
+    image_height = HPDF_Image_GetHeight (image);
+    image_width = HPDF_Image_GetWidth (image);
+    image_hw_ratio = image_height / image_width;
+
+    // 图片的高度不能高于页面的高度
+    if(image_height > hpdf->css.page_height - hpdf->css.side_margin.top - hpdf->css.side_margin.bottom)
+    {
+        image_height = hpdf->css.page_height - hpdf->css.side_margin.top - hpdf->css.side_margin.bottom;   
+    }
+
+    hpdf->css.cur_frame_pos.left = hpdf->css.cur_frame_pos.right;
+    hpdf->css.cur_frame_pos.right = hpdf->css.cur_frame_pos.left + hpdf->css.width_ratio *
+        (hpdf->css.page_width - hpdf->css.side_margin.left - hpdf->css.side_margin.right);
+    hpdf->css.cur_frame_pos.top = hpdf->css.cur_frame_pos.bottom;
+
+    // 图片的宽度不能大于当前输出的宽度
+    if(image_width > hpdf->css.cur_frame_pos.right - hpdf->css.cur_frame_pos.left) {
+        image_width = hpdf->css.cur_frame_pos.right - hpdf->css.cur_frame_pos.left;
+        image_height = image_width * image_hw_ratio;
+    }
+    
+    hpdf->css.cur_frame_pos.bottom = hpdf->css.cur_frame_pos.top - image_height - 
+        hpdf->css.line_width * 2;
+
+    if(hpdf->css.cur_frame_pos.right > hpdf->css.page_width - hpdf->css.side_margin.right)
+    {
+        hpdf->css.cur_frame_pos.right = hpdf->css.page_width - hpdf->css.side_margin.right;
+    }
+
+    if(hpdf->css.cur_frame_pos.bottom < hpdf->css.side_margin.bottom)
+    {
+        printf("need new page\n");
+        
+        hpdf->page = HPDF_AddPage (hpdf->pdf);
+        HPDF_Page_SetSize(hpdf->page, HPDF_PAGE_SIZE_A4, HPDF_PAGE_PORTRAIT);
+        
+        hpdf->css.cur_frame_pos.left = hpdf->css.side_margin.left;
+        hpdf->css.cur_frame_pos.right = hpdf->css.cur_frame_pos.left + hpdf->css.width_ratio *
+            (hpdf->css.page_width - hpdf->css.side_margin.left - hpdf->css.side_margin.right);
+        hpdf->css.cur_frame_pos.top = hpdf->css.page_height - hpdf->css.side_margin.top;
+        hpdf->css.cur_frame_pos.bottom = hpdf->css.cur_frame_pos.top - image_height;
+    }
+
+    if(hpdf->css.textAlign == HPDF_TALIGN_LEFT) {
+        pos.x = hpdf->css.cur_frame_pos.left;
+        pos.y = hpdf->css.cur_frame_pos.top - image_height;
+    } else if (hpdf->css.textAlign == HPDF_TALIGN_RIGHT) {
+        pos.x = hpdf->css.cur_frame_pos.right - image_width;
+        pos.y = hpdf->css.cur_frame_pos.top - image_height;
+    } else {
+        pos.x = hpdf->css.cur_frame_pos.right + hpdf->css.cur_frame_pos.left - image_width;
+        pos.x = pos.x / 2;
+        pos.y = hpdf->css.cur_frame_pos.top - image_height;
+    } 
+
+    // 输出边框，如果要输出背景色，必须先输背景色再输文字，所以这里先关闭文字，输出背景色，再开启文字输出
+    if(hpdf->css.withFrame)
+    {   
+        HPDF_Page_SetLineWidth (hpdf->page, hpdf->css.line_width);
+        HPDF_Page_SetRGBStroke (hpdf->page, hpdf->css.line_color.r, hpdf->css.line_color.g, hpdf->css.line_color.b);
+        HPDF_Page_SetRGBFill (hpdf->page, hpdf->css.bg_color.r, hpdf->css.bg_color.g, hpdf->css.bg_color.b);
+        HPDF_Page_Rectangle (hpdf->page, pos.x, pos.y, image_width, image_height);
+        //HPDF_Page_Stroke (hpdf->page);
+        HPDF_Page_FillStroke(hpdf->page);
+    }
+
+    HPDF_Page_DrawImage (hpdf->page, image, 
+        pos.x + hpdf->css.line_width, pos.y + hpdf->css.line_width, 
+        image_width - hpdf->css.line_width * 2, image_height - hpdf->css.line_width * 2);
+    
+    if(0)
+    {
+        // 输出失败，坐标回退到输出前的状态
+        hpdf->css.cur_frame_pos.right = hpdf->css.cur_frame_pos.left;
+        hpdf->css.cur_frame_pos.bottom = hpdf->css.cur_frame_pos.top;
+    }
+    else
+    {   
+        if((int)hpdf->css.cur_frame_pos.right < (int)(hpdf->css.page_width - hpdf->css.side_margin.right))
+        {
+            // 右边还有空间可以输入
+            hpdf->css.cur_frame_pos.left = hpdf->css.cur_frame_pos.right;
+            hpdf->css.cur_frame_pos.bottom = hpdf->css.cur_frame_pos.top;
+        } 
+        else if((int)hpdf->css.cur_frame_pos.right == (int)(hpdf->css.page_width - hpdf->css.side_margin.right))
+        {
+            // 当前行已经输满
+            hpdf->css.cur_frame_pos.left = hpdf->css.side_margin.left;
+            hpdf->css.cur_frame_pos.right = hpdf->css.side_margin.left;
+            hpdf->css.cur_frame_pos.top = hpdf->css.cur_frame_pos.bottom;
+        }
+        else
+        {
+            printf("[ERROR]left:%f right:%f top:%f bottom:%f\n", hpdf->css.cur_frame_pos.left, 
+                hpdf->css.cur_frame_pos.right, hpdf->css.cur_frame_pos.top, hpdf->css.cur_frame_pos.bottom);
+        }
+    }
+    
+    return image_height;
 }

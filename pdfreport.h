@@ -93,5 +93,7 @@ int HPDF_HANDLER_PrintEx(HPDF_HANDLER hpdf, char *text);
 
 int HPDF_HANDLER_Print(HPDF_HANDLER hpdf, char *text);
 
+int HPDF_HANDLER_PrintImage(HPDF_HANDLER hpdf, char *imageFile);
+
 
 #endif /* __PDFREPORT_H__ */
