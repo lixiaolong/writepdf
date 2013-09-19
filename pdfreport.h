@@ -25,6 +25,8 @@ typedef enum _HPDF_CSS_TYPE {
     PDF_CSS_TYPE_P,
     PDF_CSS_TYPE_TD,
     PDF_CSS_TYPE_TR,
+    PDF_CSS_TYPE_PRE,
+    PDF_CSS_TYPE_BLOCK,  //blockquote,
     PDF_CSS_TYPE_END
 } HPDF_CSS_TYPE;
 
@@ -95,5 +97,6 @@ int HPDF_HANDLER_Print(HPDF_HANDLER hpdf, char *text);
 
 int HPDF_HANDLER_PrintImage(HPDF_HANDLER hpdf, char *imageFile);
 
+int HPDF_HANDLER_PrintLine(HPDF_HANDLER hpdf);
 
 #endif /* __PDFREPORT_H__ */

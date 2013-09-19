@@ -17,7 +17,9 @@ HPDF_RGBColor g_color_white = {1, 1, 1};
 
 HPDF_RGBColor g_color_lightbluex = {0.9, 1.0, 1.0};
 HPDF_RGBColor g_color_lightblue = {0.6, 0.8, 1.0};
-
+HPDF_RGBColor g_color_gray = {0.8, 0.8, 0.8};
+HPDF_RGBColor g_color_lightgray = {0.9, 0.9, 0.9};
+HPDF_RGBColor g_color_darkgray = {0.2, 0.2, 0.2};
 
 #ifdef HPDF_DLL
 void  __stdcall
@@ -100,6 +102,7 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->font_color = g_color_black;
             css->bg_color = g_color_white;
             css->line_color = g_color_black;
+            css->text_indent = 0;
             break;
         }
 
@@ -120,6 +123,7 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->font_color = g_color_black;
             css->bg_color = g_color_white;
             css->line_color = g_color_black;
+            css->text_indent = 0;
             break;
         }
         case PDF_CSS_TYPE_H2:
@@ -139,6 +143,7 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->font_color = g_color_black;
             css->bg_color = g_color_white;
             css->line_color = g_color_black;
+            css->text_indent = 0;
             break;
         }
         case PDF_CSS_TYPE_H3:
@@ -158,6 +163,7 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->font_color = g_color_black;
             css->bg_color = g_color_white;
             css->line_color = g_color_black;
+            css->text_indent = 0;
             break;
         }
         case PDF_CSS_TYPE_H4:
@@ -177,6 +183,7 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->font_color = g_color_black;
             css->bg_color = g_color_white;
             css->line_color = g_color_black;
+            css->text_indent = 0;
             break;
         }
         case PDF_CSS_TYPE_H5:
@@ -196,6 +203,7 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->font_color = g_color_black;
             css->bg_color = g_color_white;
             css->line_color = g_color_black;
+            css->text_indent = 0;
             break;
         }
         case PDF_CSS_TYPE_H6:
@@ -215,6 +223,7 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->font_color = g_color_black;
             css->bg_color = g_color_white;
             css->line_color = g_color_black;
+            css->text_indent = 0;
             break;
         }
         case PDF_CSS_TYPE_P:
@@ -234,6 +243,7 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->font_color = g_color_black;
             css->bg_color = g_color_white;
             css->line_color = g_color_black;
+            css->text_indent = 1;
             break;
         }
         case PDF_CSS_TYPE_TR:
@@ -252,6 +262,7 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->font_color = g_color_black;
             css->bg_color = g_color_white;
             css->line_color = g_color_lightblue;
+            css->text_indent = 0;
             break;
         }
         case PDF_CSS_TYPE_TD:
@@ -270,6 +281,46 @@ int HPDF_CSS_SET(int type, HPDF_CSS *css) {
             css->font_color = g_color_black;
             css->bg_color = g_color_lightbluex;
             css->line_color = g_color_lightblue;
+            break;
+        }
+        case PDF_CSS_TYPE_PRE:
+        {
+            css->css_type = PDF_CSS_TYPE_PRE;
+            css->width_ratio = 1;
+            css->font = g_font_sun;
+            css->font_size = 12;
+            css->text_leading = css->font_size * 1.5;
+            css->seg_margin.left = css->font_size * 1;
+            css->seg_margin.right = 2;
+            css->seg_margin.top = css->font_size / 2;
+            css->seg_margin.bottom = css->font_size / 2;
+            css->withFrame = 1;
+            css->text_height = 0;
+            css->textAlign = HPDF_TALIGN_LEFT;
+            css->font_color = g_color_black;
+            css->bg_color = g_color_lightgray;
+            css->line_color = g_color_gray;
+            css->text_indent = 0;
+            break;
+        }
+        case PDF_CSS_TYPE_BLOCK:
+        {
+            css->css_type = PDF_CSS_TYPE_BLOCK;
+            css->width_ratio = 1;
+            css->font = g_font_sun;
+            css->font_size = 12;
+            css->text_leading = css->font_size * 1.5;
+            css->seg_margin.left = css->font_size * 1.5;
+            css->seg_margin.right = 2;
+            css->seg_margin.top = css->font_size / 2;
+            css->seg_margin.bottom = css->font_size / 2;
+            css->withFrame = 1;
+            css->text_height = 0;
+            css->textAlign = HPDF_TALIGN_LEFT;
+            css->font_color = g_color_darkgray;
+            css->bg_color = g_color_lightgray;
+            css->line_color = g_color_gray;
+            css->text_indent = 0;
             break;
         }
         default:
@@ -393,6 +444,7 @@ int HPDF_HANDLER_PrintEx(HPDF_HANDLER hpdf, char *text) {
                 hpdf->css.title_num_h4 = 0;
                 hpdf->css.title_num_h5 = 0;
                 hpdf->css.title_num_h6 = 0;
+                hpdf->css.withFrame = 2;
 
                 snprintf(output, output_len, "%d %s", hpdf->css.title_num_h1, text);
             } else if(PDF_CSS_TYPE_H2 == hpdf->css.css_type ) {
@@ -446,6 +498,32 @@ int HPDF_HANDLER_PrintEx(HPDF_HANDLER hpdf, char *text) {
         }
         case PDF_CSS_TYPE_P:
         {
+            if(hpdf->css.text_indent)
+            {
+                // 首行缩进
+                output = malloc(output_len);
+                snprintf(output, output_len, "    %s", text);
+            }
+            break;
+        }
+        case PDF_CSS_TYPE_PRE:
+        {
+            break;
+        }
+        case PDF_CSS_TYPE_BLOCK:
+        {
+            hpdf->css.width_ratio = 0.99;            
+            hpdf->css.bg_color = g_color_gray;
+            hpdf->css.seg_margin.left = 2;
+            hpdf->css.seg_margin.right = 2;
+            hpdf->css.text_height = HPDF_CSS_GetTextHeight(hpdf, text);
+            hpdf->css.width_ratio = 0.01;
+            HPDF_HANDLER_Print(hpdf, "");
+            HPDF_CSS_SET(PDF_CSS_TYPE_BLOCK, &hpdf->css);
+            hpdf->css.text_height = 0;
+            hpdf->css.bg_color = g_color_lightgray;
+            hpdf->css.width_ratio = 1;
+            hpdf->css.withFrame = 0;
             if(hpdf->css.text_indent)
             {
                 // 首行缩进
@@ -573,7 +651,7 @@ int HPDF_HANDLER_Print(HPDF_HANDLER hpdf, char *text) {
         hpdf->css.cur_frame_pos.right, hpdf->css.cur_frame_pos.top, hpdf->css.cur_frame_pos.bottom);
 
     // 输出边框，如果要输出背景色，必须先输背景色再输文字，所以这里先关闭文字，输出背景色，再开启文字输出
-    if(hpdf->css.withFrame)
+    if(hpdf->css.withFrame == 1)
     {
         HPDF_Page_EndText(hpdf->page);
         
@@ -612,6 +690,16 @@ int HPDF_HANDLER_Print(HPDF_HANDLER hpdf, char *text) {
     
     HPDF_Page_EndText(hpdf->page);
     printf("output string ret:%x outlen:%d height:%f width:%f\n", ret, outlen, hpdf->css.page_height, hpdf->css.page_width);
+
+    if(hpdf->css.withFrame == 2)
+    {
+        HPDF_Page_SetLineWidth (hpdf->page, hpdf->css.line_width);
+        HPDF_Page_SetRGBStroke (hpdf->page, hpdf->css.line_color.r, hpdf->css.line_color.g, hpdf->css.line_color.b);
+
+        HPDF_Page_MoveTo (hpdf->page, hpdf->css.cur_text_pos.left, hpdf->css.cur_text_pos.bottom);
+        HPDF_Page_LineTo (hpdf->page, hpdf->css.cur_text_pos.right, hpdf->css.cur_text_pos.bottom);
+        HPDF_Page_Stroke (hpdf->page);
+    }
 
     if(outlen <= 0)
     {
@@ -681,7 +769,7 @@ int HPDF_HANDLER_PrintImage(HPDF_HANDLER hpdf, char *imageFile) {
         printf("load image file failed!\n");
         withFrame = hpdf->css.withFrame;
         hpdf->css.withFrame = 1;
-        HPDF_HANDLER_Print(hpdf, "图片加载失败");
+        HPDF_HANDLER_Print(hpdf, "加载失败");
         hpdf->css.withFrame = withFrame;
         return 40;
     }
@@ -785,4 +873,50 @@ int HPDF_HANDLER_PrintImage(HPDF_HANDLER hpdf, char *imageFile) {
     }
     
     return image_height;
+}
+
+int HPDF_HANDLER_PrintLine(HPDF_HANDLER hpdf) {
+    hpdf->css.cur_frame_pos.left = hpdf->css.cur_frame_pos.right;
+    hpdf->css.cur_frame_pos.right = hpdf->css.cur_frame_pos.left + hpdf->css.width_ratio *
+        (hpdf->css.page_width - hpdf->css.side_margin.left - hpdf->css.side_margin.right);
+    hpdf->css.cur_frame_pos.top = hpdf->css.cur_frame_pos.bottom;
+    hpdf->css.cur_frame_pos.bottom = hpdf->css.cur_frame_pos.top - hpdf->css.line_width -
+        hpdf->css.text_height;
+
+    HPDF_Page_SetLineWidth (hpdf->page, hpdf->css.line_width);
+    HPDF_Page_SetRGBStroke (hpdf->page, hpdf->css.line_color.r, hpdf->css.line_color.g, hpdf->css.line_color.b);
+
+    HPDF_Page_MoveTo (hpdf->page, hpdf->css.cur_frame_pos.left, hpdf->css.cur_frame_pos.bottom);
+    HPDF_Page_LineTo (hpdf->page, hpdf->css.cur_frame_pos.right, hpdf->css.cur_frame_pos.bottom);
+    HPDF_Page_Stroke (hpdf->page);
+    
+    if(0)
+    {
+        // 输出失败，坐标回退到输出前的状态
+        hpdf->css.cur_frame_pos.right = hpdf->css.cur_frame_pos.left;
+        hpdf->css.cur_frame_pos.bottom = hpdf->css.cur_frame_pos.top;
+    }
+    else
+    {   
+        if((int)hpdf->css.cur_frame_pos.right < (int)(hpdf->css.page_width - hpdf->css.side_margin.right))
+        {
+            // 右边还有空间可以输入
+            hpdf->css.cur_frame_pos.left = hpdf->css.cur_frame_pos.right;
+            hpdf->css.cur_frame_pos.bottom = hpdf->css.cur_frame_pos.top;
+        } 
+        else if((int)hpdf->css.cur_frame_pos.right == (int)(hpdf->css.page_width - hpdf->css.side_margin.right))
+        {
+            // 当前行已经输满
+            hpdf->css.cur_frame_pos.left = hpdf->css.side_margin.left;
+            hpdf->css.cur_frame_pos.right = hpdf->css.side_margin.left;
+            hpdf->css.cur_frame_pos.top = hpdf->css.cur_frame_pos.bottom;
+        }
+        else
+        {
+            printf("[ERROR]left:%f right:%f top:%f bottom:%f\n", hpdf->css.cur_frame_pos.left, 
+                hpdf->css.cur_frame_pos.right, hpdf->css.cur_frame_pos.top, hpdf->css.cur_frame_pos.bottom);
+        }
+    }
+
+    return 0;
 }

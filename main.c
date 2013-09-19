@@ -46,22 +46,31 @@ int main() {
 需要生成pdf报表的地方，引入pdfreport.h头文件，接着定义一个HPDF_HANDLER结构，调用HPDF_HANDLER_New\
 生成一个pdf handler结构，接下来就可以对这个结构进行输出了。");
 
+    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
     HPDF_HANDLER_PrintEx(hpdf, "在需要输出内容时，先要设置一下输出的样式，设置方法是调用HPDF_CSS_SET\
 方法，输出样式是仿照html语言的，目前支持的输出样式有PDF_CSS_TYPE_H1至PDF_CSS_TYPE_H6六种标题，\
 PDF_CSS_TYPE_P，段落文本，PDF_CSS_TYPE_TD表格头，PDF_CSS_TYPE_TR表格体。");
 
+    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
     HPDF_HANDLER_PrintEx(hpdf, "内容输出完成后，调用HPDF_SaveToFile保存到文件，然后调用HPDF_HANDLER_Free释放pdf句柄即可。");
 
     HPDF_HANDLER_PrintEx(hpdf, "在HPDF_CSS结构中有很多属性，控制了内容如何展现，比如字体，字体大小，\
 字体颜色，是否需要边框，页边距等等，每一个属性都可以在输出前去自由调整。");
 
+    HPDF_CSS_SET(PDF_CSS_TYPE_H1, &hpdf->css);
+    HPDF_HANDLER_PrintEx(hpdf, "一些例子");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_H2, &hpdf->css);
+    HPDF_HANDLER_PrintEx(hpdf, "输出图片");
+
     hpdf->css.width_ratio = 0.2;
     hpdf->css.textAlign = HPDF_TALIGN_LEFT;
     height = HPDF_HANDLER_PrintImage(hpdf, "1dptechlogo.png");
 
-    HPDF_CSS_SET(PDF_CSS_TYPE_H1, &hpdf->css);
+    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
     hpdf->css.width_ratio = 0.8;
     hpdf->css.text_height = height;
+    //hpdf->css.withFrame = 1;
     hpdf->css.textAlign = HPDF_TALIGN_RIGHT;
     HPDF_HANDLER_Print(hpdf, "内部公开");
 
@@ -70,7 +79,7 @@ PDF_CSS_TYPE_P，段落文本，PDF_CSS_TYPE_TD表格头，PDF_CSS_TYPE_TR表格体。");
     hpdf->css.width_ratio = 1;
     hpdf->css.textAlign = HPDF_TALIGN_LEFT;
 
-    HPDF_HANDLER_Print(hpdf, "------------------------------------------------------------------------------------");
+    //HPDF_HANDLER_PrintLine(hpdf);
 
     hpdf->css.width_ratio = 0.5;
     height = HPDF_HANDLER_PrintImage(hpdf, "1.png");
@@ -81,7 +90,26 @@ PDF_CSS_TYPE_P，段落文本，PDF_CSS_TYPE_TD表格头，PDF_CSS_TYPE_TR表格体。");
     hpdf->css.width_ratio = 1;
     hpdf->css.withFrame = 0;    
     HPDF_HANDLER_PrintEx(hpdf, "上面是输出图片的例子，居右。");
-    
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_H2, &hpdf->css);
+    HPDF_HANDLER_PrintEx(hpdf, "输出pre");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_PRE, &hpdf->css);
+    HPDF_HANDLER_PrintEx(hpdf, "这段文字在html中的PRE 标签内部");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_H2, &hpdf->css);
+    HPDF_HANDLER_PrintEx(hpdf, "输出BLOCKQUOTE");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_BLOCK, &hpdf->css);
+    HPDF_HANDLER_PrintEx(hpdf, "这段文字在html中的BLOCKQUOTE 标签内部");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_H2, &hpdf->css);
+    HPDF_HANDLER_PrintEx(hpdf, "输出下划线");
+
+    HPDF_CSS_SET(PDF_CSS_TYPE_P, &hpdf->css);
+    HPDF_HANDLER_PrintEx(hpdf, "输出Line");
+
+    HPDF_HANDLER_PrintLine(hpdf);
         
     /* save the document to a file */
     HPDF_SaveToFile (hpdf->pdf, fname);
